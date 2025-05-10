@@ -1,0 +1,143 @@
+extends layout
+
+block content
+    .checkout-container
+        h1 Оформление заказа
+        if error
+            .error-message= error
+        
+        .checkout-content
+            .order-summary
+                h2 Содержимое заказа
+                if cart
+                    - const cartItems = JSON.parse(cart.Список_товаров)
+                    if cartItems && cartItems.length > 0
+                        .cart-items
+                            each item in cartItems
+                                .cart-item
+                                    .item-info
+                                        h3= item.Название
+                                        p.item-price #{item.Цена} ₽ × #{item.quantity} = #{item.Цена * item.quantity} ₽
+                        .order-total
+                            p Итого: #{cart.Итоговая_цена} ₽
+                    else
+                        p.empty-cart Ваша корзина пуста
+                        a.button(href="/catalog") Перейти в каталог
+
+            .checkout-form
+                h2 Информация для доставки
+                form(action="/checkout" method="POST")
+                    .form-group
+                        label(for="address") Аптека для получения заказа
+                        input#address(type="text" name="address" value=user.Адрес_доставки readonly)
+                    
+                    .form-group
+                        label(for="payment") Способ оплаты
+                        select#payment(name="payment" required)
+                            option(value="card") Банковской картой
+                            option(value="cash") Наличными при получении
+
+                    button.checkout-button(type="submit") Подтвердить заказ
+
+block styles
+    style.
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .checkout-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .order-summary, .checkout-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .cart-items {
+            margin: 1rem 0;
+        }
+
+        .cart-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-info h3 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .item-price {
+            color: #666;
+            margin: 0.5rem 0;
+        }
+
+        .order-total {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #eee;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        .checkout-button {
+            width: 100%;
+            padding: 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .checkout-button:hover {
+            background: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-content {
+                grid-template-columns: 1fr;
+            }
+        } 

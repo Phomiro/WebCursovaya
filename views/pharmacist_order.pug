@@ -1,0 +1,75 @@
+extends layout
+
+block content
+    .pharmacist-order-container
+        h1 Заказ ##{order.OrderID}
+        .order-info
+            h2 Информация о заказе
+            p Статус: #{order.Статус}
+            p Дата создания: #{order.Дата_начала_заказа}
+            p Адрес выдачи: #{order.Адрес_доставки}
+            p Сумма: #{order.Итоговая_цена} ₽
+        .client-info
+            h2 Данные клиента
+            p ФИО: #{client.ФИО}
+            p Телефон: #{client.Номер_телефона}
+        .order-items
+            h2 Состав заказа
+            if items && items.length > 0
+                table.order-table
+                    thead
+                        tr
+                            th Товар
+                            th Кол-во
+                            th Цена
+                            th Рецептурный
+                    tbody
+                        each item in items
+                            tr
+                                td= item.Название
+                                td= item.quantity
+                                td= item.Цена
+                                td= item.Рецептурный ? 'Да' : 'Нет'
+            else
+                p Нет товаров в заказе
+        if order.Статус !== 'выполнен'
+            form(action=`/pharmacist/order/${order.OrderID}/complete` method="POST")
+                button.button(type="submit") Подтвердить выполнение заказа
+        else
+            p.status-done Заказ уже выполнен
+        a.button.button-outline(href="/pharmacist") Назад к заказам
+
+block styles
+    style.
+        .pharmacist-order-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .order-info, .client-info, .order-items {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .order-table th, .order-table td {
+            border: 1px solid #eee;
+            padding: 0.5rem 1rem;
+            text-align: center;
+        }
+        .order-table th {
+            background: #f8f9fa;
+        }
+        .button {
+            margin-top: 1rem;
+        }
+        .status-done {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 1rem;
+        } 

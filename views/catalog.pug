@@ -1,0 +1,215 @@
+extends layout
+
+block content
+    .catalog-container
+        .catalog-filters
+            form#product-filter.filter-form
+                .filter-group
+                    h3 Категории
+                    select(name="category", onchange="this.form.submit()")
+                        option(value="") Все категории
+                        option(value="лекарство", selected=category === 'лекарство') Лекарства
+                        option(value="медицинское изделие", selected=category === 'медицинское изделие') Медицинские изделия
+                        option(value="косметика", selected=category === 'косметика') Косметика
+
+                .filter-group
+                    h3 Поиск
+                    .search-box
+                        input#search-input(type="text", name="q", placeholder="Поиск товаров...", value=search)
+                        button(type="submit") Найти
+
+                .filter-group
+                    h3 Сортировка
+                    select(name="sort", onchange="this.form.submit()")
+                        option(value="") По умолчанию
+                        option(value="price_asc", selected=sort === 'price_asc') Цена: по возрастанию
+                        option(value="price_desc", selected=sort === 'price_desc') Цена: по убыванию
+
+        .catalog-content
+            if products && products.length > 0
+                .products-grid
+                    each product in products
+                        .product-card
+                            .product-image
+                                img(src=product.image || "/images/default-product.png", alt=product.Название)
+                            .product-info
+                                a.product-title(href=`/product/${product.ProductID}`)
+                                    h3= product.Название
+                                p.product-description= product.Описание
+                                if product.Действующее_вещество
+                                    p.product-active-ingredient Действующее вещество: #{product.Действующее_вещество}
+                                p.product-manufacturer Производитель: #{product.Производитель}
+                                if product.Дозировка
+                                    p.product-dosage Дозировка: #{product.Дозировка}
+                                p.product-price #{product.Цена} ₽
+                            .product-actions
+                                if user
+                                    button.add-to-cart(
+                                        data-id=product.ProductID 
+                                        data-available=product.isAvailable ? 'true' : 'false'
+                                        class=product.isAvailable ? '' : 'unavailable'
+                                    )= product.isAvailable ? 'В корзину' : 'Нет в наличии'
+                                else
+                                    a.button(href="/login") Войти для покупки
+            else
+                .no-products
+                    p Товары не найдены
+                    if category || search
+                        p Попробуйте изменить параметры поиска
+
+block styles
+    style.
+        .catalog-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .catalog-filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+        }
+
+        .search-box button {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .no-products {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .product-card {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-info h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .product-title {
+            color: #2c3e50;
+            text-decoration: none;
+        }
+
+        .product-title:hover {
+            color: var(--primary-color);
+        }
+
+        .product-actions {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: center;
+        }
+
+        .add-to-cart {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-to-cart:hover {
+            background: var(--primary-color-dark);
+        }
+
+        @media (max-width: 768px) {
+            .catalog-container {
+                grid-template-columns: 1fr;
+            }
+        } 
+
+block scripts
+    script.
+        document.addEventListener('DOMContentLoaded', function() {
+            const addToCartButtons = document.querySelectorAll('.add-to-cart');
+            
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.dataset.id;
+                    fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ productId: productId })
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Произошла ошибка при добавлении товара в корзину');
+                    });
+                });
+            });
+        }); 

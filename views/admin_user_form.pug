@@ -1,0 +1,69 @@
+extends layout
+
+block content
+    .admin-user-form
+        h1= userData.UserID ? 'Редактировать пользователя' : 'Добавить пользователя'
+        form(method='POST', action=formAction)
+            label(for='ФИО') ФИО
+            input(type='text', name='ФИО', id='ФИО', required, value=userData.ФИО || '')
+            label(for='Email') Email
+            input(type='email', name='Email', id='Email', required, value=userData.Email || '')
+            label(for='Пароль') Пароль
+            input(type='password', name='Пароль', id='Пароль', placeholder=userData.UserID ? 'Оставьте пустым для сохранения текущего' : '', autocomplete='new-password')
+            label(for='Роль') Роль
+            select(name='Роль', id='Роль', required)
+                option(value='client' selected=userData.Роль==='client') Клиент
+                option(value='pharmacist' selected=userData.Роль==='pharmacist') Фармацевт
+                option(value='admin' selected=userData.Роль==='admin') Администратор
+            button.button(type='submit') Сохранить
+            a.button(href='/admin/users') Отмена 
+
+block styles
+    style.
+        .admin-user-form {
+            max-width: 500px;
+            margin: 2.5rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 2.5rem 2rem 2rem 2rem;
+        }
+        .admin-user-form h1 {
+            color: #27ae60;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+        .admin-user-form form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+        }
+        .admin-user-form label {
+            font-weight: 500;
+            color: #27ae60;
+            margin-bottom: 0.2rem;
+        }
+        .admin-user-form input, .admin-user-form select, .admin-user-form textarea {
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #cfd8dc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #f7fafc;
+            margin-bottom: 0.2rem;
+        }
+        .admin-user-form .button {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.3rem;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 0.7rem;
+            margin-top: 0.5rem;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .admin-user-form .button:hover {
+            background: #219150;
+        } 

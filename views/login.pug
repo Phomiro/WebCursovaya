@@ -1,0 +1,18 @@
+extends layout
+
+block content
+    .auth-container
+        h1 Вход в систему
+        if error
+            .error-message= error
+        form.auth-form(action="/login", method="POST")
+            .form-group
+                label(for="email") Email
+                input#email(type="email", name="email", required)
+            .form-group
+                label(for="password") Пароль
+                input#password(type="password", name="password", required)
+            button.button(type="submit") Войти
+        .auth-links
+            p Нет аккаунта? 
+                a(href="/register") Зарегистрироваться 

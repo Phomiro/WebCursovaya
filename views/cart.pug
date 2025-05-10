@@ -1,0 +1,145 @@
+extends layout
+
+block content
+    .cart-container
+        h1 Корзина
+        if error
+            .error-message= error
+        if cart
+            - const cartItems = JSON.parse(cart.Список_товаров)
+            if cartItems && cartItems.length > 0
+                .cart-items
+                    each item in cartItems
+                        .cart-item
+                            .item-info
+                                h3= item.Название || 'Товар не найден'
+                                p.item-price #{item.Цена || 0} ₽
+                            .item-quantity
+                                label Количество:
+                                input.update-quantity(
+                                    type="number"
+                                    min="1"
+                                    value=item.quantity
+                                    data-id=item.ProductID
+                                )
+                            .item-actions
+                                button.remove-from-cart(
+                                    data-id=item.ProductID
+                                    type="button"
+                                ) Удалить
+                .cart-summary
+                    p Итого товаров: #{cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                    p Общая сумма: #{cartItems.reduce((sum, item) => sum + (item.Цена || 0) * item.quantity, 0)} ₽
+                    button.checkout-button(type="button") Оформить заказ
+            else
+                p.empty-cart Ваша корзина пуста
+                a.button(href="/catalog") Перейти в каталог
+        else
+            p.empty-cart Ваша корзина пуста
+            a.button(href="/catalog") Перейти в каталог
+
+block styles
+    style.
+        .cart-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .cart-items {
+            margin-bottom: 2rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-info {
+            flex: 2;
+        }
+
+        .item-quantity {
+            flex: 1;
+            text-align: center;
+        }
+
+        .item-actions {
+            flex: 1;
+            text-align: right;
+        }
+
+        .cart-summary {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .checkout-button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        .checkout-button:hover {
+            background: #0056b3;
+        }
+
+        .empty-cart {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8d7da;
+            border-radius: 8px;
+        }
+
+block scripts
+    script.
+        $(document).ready(function() {
+            // Обработка изменения количества
+            $('.update-quantity').on('change', function() {
+                const productId = $(this).data('id');
+                const quantity = $(this).val();
+                
+                $.post('/cart/update', { productId, quantity })
+                    .done(function() {
+                        window.location.reload();
+                    })
+                    .fail(function() {
+                        alert('Произошла ошибка при обновлении количества');
+                    });
+            });
+
+            // Обработка удаления товара
+            $('.remove-from-cart').on('click', function() {
+                const productId = $(this).data('id');
+                
+                $.post('/cart/remove', { productId })
+                    .done(function() {
+                        window.location.reload();
+                    })
+                    .fail(function() {
+                        alert('Произошла ошибка при удалении товара');
+                    });
+            });
+
+            // Обработка оформления заказа
+            $('.checkout-button').on('click', function() {
+                window.location.href = '/checkout';
+            });
+        }); 

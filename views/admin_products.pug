@@ -1,0 +1,87 @@
+extends layout
+
+block content
+    .admin-products
+        h1 Список товаров
+        a.button(href='/admin/products/new') Добавить товар
+        table
+            thead
+                tr
+                    th ID
+                    th Название
+                    th Описание
+                    th Цена
+                    th Вид
+                    th Производитель
+                    th Дозировка
+                    th В наличии
+                    th Действия
+            tbody
+                each p in products
+                    tr
+                        td= p.ProductID
+                        td= p.Название
+                        td= p.Описание
+                        td= p.Цена
+                        td= p.Вид_товара
+                        td= p.Производитель
+                        td= p.Дозировка
+                        td= p.Наличие ? 'Да' : 'Нет'
+                        td
+                            a.button(href=`/admin/products/${p.ProductID}/edit`) Редактировать
+                            form(method='POST', action=`/admin/products/${p.ProductID}/delete`, style='display:inline')
+                                button(type='submit', onclick='return confirm("Удалить товар?")') Удалить 
+
+block styles
+    style.
+        .admin-products {
+            max-width: 1100px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 2rem 2.5rem 2.5rem 2.5rem;
+        }
+        .admin-products h1 {
+            color: #27ae60;
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+        }
+        .admin-products table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            background: #fafbfc;
+        }
+        .admin-products th, .admin-products td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .admin-products th {
+            background: #eafaf1;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .admin-products tr:hover {
+            background: #f0f4fa;
+        }
+        .admin-products .button {
+            display: inline-block;
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.2rem;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .admin-products .button:hover {
+            background: #219150;
+        }
+        .admin-products form {
+            display: inline;
+        } 

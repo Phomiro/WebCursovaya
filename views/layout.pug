@@ -1,0 +1,48 @@
+doctype html
+html(lang="ru")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Аптека - #{title || 'Главная'}
+        link(rel="stylesheet", href="/stylesheets/style.css")
+        block styles
+    body
+        header.header
+            .container
+                a.logo(href="/") Аптека
+                nav.nav
+                    a(href="/") Главная
+                    a(href="/catalog") Каталог
+                    if user
+                        a(href="/cart") Корзина
+                        if user.role === 'admin'
+                            a(href="/admin") Панель администратора
+                        else if user.role === 'pharmacist'
+                            a(href="/pharmacist") Панель фармацевта
+
+                        a(href="/profile") Профиль
+                        a(href="/logout") Выйти
+                    else
+                        if !user || (user && user.role !== 'admin')
+                            a(href="/login") Войти
+                            a(href="/register") Регистрация
+        main.main
+            .container
+                block content
+        footer.footer
+            .container
+                .footer-content
+                    .footer-section
+                        h3 Контакты
+                        p Телефон: +7 (900) 555-35-35
+                        p Email: uiuiui@example.com
+                    .footer-section
+                        h3 Адрес
+                        p г. Казань, ул. Котиков, д. 3
+                    .footer-section
+                        h3 Время работы
+                        p Пн-Пт: 9:00 - 21:00
+                        p Сб-Вс: 10:00 - 20:00
+        script(src="https://code.jquery.com/jquery-3.6.0.min.js")
+        script(src="/javascripts/cart.js")
+        block scripts 

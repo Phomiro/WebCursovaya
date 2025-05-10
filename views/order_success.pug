@@ -1,0 +1,41 @@
+extends layout
+
+block content
+    .order-success-container
+        h1 Заказ успешно оформлен!
+        p Спасибо за ваш заказ. Мы уже начали его обработку.
+        a.button(href="/profile") Перейти в профиль
+
+block styles
+    style.
+        .order-success-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 4rem;
+        }
+        .order-success-container h1 {
+            color: #28a745;
+            margin-bottom: 1.5rem;
+        }
+        .order-success-container p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .order-success-container .button {
+            background: #007bff;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .order-success-container .button:hover {
+            background: #0056b3;
+        } 

@@ -1,0 +1,242 @@
+extends layout
+
+block content
+    .product-page
+        if error
+            .error-message= error
+        else if product
+            .product-details
+                .product-header
+                    h1= product.Название
+                    .product-actions
+                        if user
+                            button.add-to-cart(
+                                data-id=product.ProductID 
+                                data-available=isAvailable ? 'true' : 'false'
+                                class=isAvailable ? '' : 'unavailable'
+                            )= isAvailable ? 'В корзину' : 'Нет в наличии'
+                        else
+                            a.button(href='/login') Войдите для покупки
+                
+                .product-content
+                    .product-image
+                        img(src=product.image || "/images/default-product.png", alt=product.Название)
+                    
+                    .product-info
+                        .price-block
+                            p.product-price #{product.Цена} ₽
+                            if isAvailable
+                                p.in-stock В наличии в вашей аптеке
+                            else
+                                p.out-of-stock Нет в наличии в вашей аптеке
+
+                        if availablePharmacies && availablePharmacies.length > 0
+                            .info-block
+                                h3 Доступен в аптеках:
+                                ul.pharmacy-list
+                                    each pharmacy in availablePharmacies
+                                        li(class=pharmacy.Адрес === user.Адрес_доставки ? 'current-pharmacy' : '')
+                                            = pharmacy.Название
+                                            span.address (#{pharmacy.Адрес})
+
+                        if product.Описание
+                            .info-block
+                                h3 Описание
+                                p= product.Описание
+
+                        .info-block
+                            h3 Производитель
+                            p= product.Производитель
+                        
+                        .info-block
+                            h3 Страна производитель
+                            p= product.Страна_производитель
+
+                        if product.Срок_годности
+                            .info-block
+                                h3 Срок годности
+                                p= product.Срок_годности
+
+                        if product.Форма
+                            .info-block
+                                h3 Форма
+                                p= product.Форма
+
+                        if product.Действующее_вещество
+                            .info-block
+                                h3 Действующее вещество
+                                p= product.Действующее_вещество
+
+                        if product.Дозировка
+                            .info-block
+                                h3 Дозировка
+                                p= product.Дозировка
+
+                        if product.В_упаковке
+                            .info-block
+                                h3 В упаковке
+                                p= product.В_упаковке
+
+                        if product.Рецептурный
+                            .prescription-notice
+                                p.warning Отпускается по рецепту
+                                if user && user.role === 'client'
+                                    p Для покупки необходимо предъявить рецепт в аптеке
+
+block styles
+    style.
+        .product-page {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .product-details {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .product-header {
+            padding: 2rem;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .product-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .price-block {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .in-stock {
+            color: #28a745;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .out-of-stock {
+            color: #dc3545;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .info-block {
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .info-block h3 {
+            color: #666;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .info-block p {
+            margin: 0;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .pharmacy-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pharmacy-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pharmacy-list li:last-child {
+            border-bottom: none;
+        }
+
+        .pharmacy-list .address {
+            color: #666;
+            margin-left: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .pharmacy-list .current-pharmacy {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .prescription-notice {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff3cd;
+            border-radius: 4px;
+        }
+
+        .prescription-notice .warning {
+            color: #856404;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .add-to-cart {
+            padding: 0.75rem 2rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .add-to-cart:hover {
+            background: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .product-content {
+                grid-template-columns: 1fr;
+            }
+
+            .product-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        } 
+
+block scripts
+    script(src="/javascripts/cart.js") 

@@ -1,0 +1,185 @@
+extends layout
+
+block content
+    .profile-dashboard
+        h1 Личный кабинет
+        if message
+            .alert.alert-info= message
+        .profile-sections
+            .section
+                h2 Личные данные
+                .profile-info
+                    .info-group
+                        label ФИО
+                        p= user.ФИО
+                    .info-group
+                        label Email
+                        p= user.Email
+                    .info-group
+                        label Телефон
+                        p= user.Номер_телефона
+                    .info-group
+                        label Адрес доставки
+                        p= user.Адрес_доставки
+                    button.button(type="button" id="edit-profile-btn") Редактировать
+
+            .section
+                h2 История заказов
+                .orders-history
+                    if user.История_заказов && user.История_заказов.length > 0
+                        - const sortedOrders = user.История_заказов.slice().reverse()
+                        each order in sortedOrders
+                            .order-card
+                                h3 Заказ ##{order.id}
+                                p.order-date Дата: #{order.date}
+                                p.order-status(class=order.status === 'выполнен' ? 'status-done' : '') Статус: #{order.status}
+                                p.order-total Сумма: #{order.total} ₽
+                        
+                                // pre= JSON.stringify(order, null, 2)
+                                //button.button.button-outline(onclick=`window.location.href='/orders/${order.id}'`) Подробнее
+                    else
+                        p.no-orders У вас пока нет заказов
+
+            //-.section
+                h2 Избранное
+                .favorites
+                    if user.favorites && user.favorites.length > 0
+                        .products-grid
+                            each product in user.favorites
+                                .product-card.small
+                                    .product-image
+                                        img(src=product.image || "/images/default-product.png", alt=product.name)
+                                    .product-info
+                                        h3= product.name
+                                        p.product-price #{product.price} ₽
+                                        button.button В корзину
+                    else
+                        p.no-favorites У вас пока нет избранных товаров 
+
+    // Модальное окно редактирования профиля
+    .modal#edit-profile-modal(style="display:none;")
+        .modal-content
+            h2 Редактировать профиль
+            form#edit-profile-form(action="/profile/edit" method="POST")
+                .form-group
+                    label(for="edit-name") ФИО
+                    input#edit-name(type="text" name="name" required value=user.ФИО)
+                .form-group
+                    label(for="edit-email") Email
+                    input#edit-email(type="email" name="email" required value=user.Email)
+                .form-group
+                    label(for="edit-phone") Телефон
+                    input#edit-phone(type="text" name="phone" required value=user.Номер_телефона)
+                .form-group
+                    label(for="edit-address") Адрес доставки (аптека)
+                    select#edit-address(name="address" required)
+                        option(value="" disabled selected) Выберите аптеку
+                        if pharmacies
+                            each pharmacy in pharmacies
+                                option(value=pharmacy.Адрес selected=(user.Адрес_доставки === pharmacy.Адрес))= pharmacy.Адрес
+                        else
+                            option(value=user.Адрес_доставки selected) #{user.Адрес_доставки}
+                .modal-actions
+                    button.button(type="submit") Сохранить
+                    button.button.button-outline(type="button" id="close-modal-btn") Отмена
+
+block styles
+    style.
+        .profile-dashboard {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .profile-dashboard h1 {
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        .profile-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .info-group {
+            margin-bottom: 1rem;
+        }
+
+        .info-group label {
+            display: block;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-group p {
+            font-size: 1.1rem;
+        }
+
+        .order-card {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .order-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .order-date,
+        .order-status,
+        .order-total {
+            margin-bottom: 0.3rem;
+        }
+
+        .no-orders,
+        .no-favorites {
+            text-align: center;
+            color: #666;
+            padding: 1rem;
+        }
+
+        .product-card.small {
+            max-width: 200px;
+        }
+
+        .product-card.small .product-image {
+            height: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .status-done {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+block scripts
+    script.
+        document.getElementById('edit-profile-btn').onclick = function() {
+            document.getElementById('edit-profile-modal').style.display = 'block';
+        };
+        document.getElementById('close-modal-btn').onclick = function() {
+            document.getElementById('edit-profile-modal').style.display = 'none';
+        }; 

@@ -1,0 +1,64 @@
+extends layout
+
+block content
+    .admin-pharmacy-form
+        h1= pharmacy.PharmacyID ? 'Редактировать аптеку' : 'Добавить аптеку'
+        form(method='POST', action=formAction)
+            label(for='Название') Название
+            input(type='text', name='Название', id='Название', required, value=pharmacy.Название || '')
+            label(for='Адрес') Адрес
+            input(type='text', name='Адрес', id='Адрес', required, value=pharmacy.Адрес || '')
+            label(for='Доступные_товары') Доступные товары (JSON)
+            textarea(name='Доступные_товары', id='Доступные_товары')= pharmacy.Доступные_товары || '[]'
+            button.button(type='submit') Сохранить
+            a.button(href='/admin/pharmacies') Отмена 
+
+block styles
+    style.
+        .admin-pharmacy-form {
+            max-width: 500px;
+            margin: 2.5rem auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 2.5rem 2rem 2rem 2rem;
+        }
+        .admin-pharmacy-form h1 {
+            color: #27ae60;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+        .admin-pharmacy-form form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+        }
+        .admin-pharmacy-form label {
+            font-weight: 500;
+            color: #27ae60;
+            margin-bottom: 0.2rem;
+        }
+        .admin-pharmacy-form input, .admin-pharmacy-form select, .admin-pharmacy-form textarea {
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #cfd8dc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #f7fafc;
+            margin-bottom: 0.2rem;
+        }
+        .admin-pharmacy-form .button {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.3rem;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 0.7rem;
+            margin-top: 0.5rem;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .admin-pharmacy-form .button:hover {
+            background: #219150;
+        } 

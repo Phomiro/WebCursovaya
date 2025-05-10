@@ -1,0 +1,122 @@
+extends layout
+
+block content
+    .hero
+        h1 Добро пожаловать в нашу аптеку
+        p Широкий выбор лекарств и товаров для здоровья
+        if !user
+            .hero-buttons
+                a.button(href="/register") Зарегистрироваться
+                a.button.button-outline(href="/login") Войти
+
+    .products-section
+        h2 Популярные товары
+        .products-grid
+            each product in products
+                .product-card
+                    .product-image
+                        img(src=product.image || "/images/default-product.png", alt=product.Название)
+                    .product-info
+                        a.product-title(href=`/product/${product.ProductID}`)
+                            h3= product.Название
+                        p.product-description= product.Описание
+                        if product.Действующее_вещество
+                            p.product-active-ingredient Действующее вещество: #{product.Действующее_вещество}
+                        p.product-manufacturer Производитель: #{product.Производитель}
+                        if product.Дозировка
+                            p.product-dosage Дозировка: #{product.Дозировка}
+                        p.product-price #{product.Цена} ₽
+                    .product-actions
+                        if user
+                            button.add-to-cart(
+                                data-id=product.ProductID
+                                data-available=product.isAvailable ? 'true' : 'false'
+                                class=product.isAvailable ? '' : 'unavailable'
+                            )= product.isAvailable ? 'В корзину' : 'Нет в наличии'
+                        else
+                            a.button(href="/login") Войти для покупки
+
+    .categories-section
+        h2 Категории товаров
+        .categories-grid
+            .category-card
+                h3 Лекарства
+                a(href="/catalog?category=лекарство") Перейти
+            .category-card
+                h3 Медицинские изделия
+                a(href="/catalog?category=медицинское изделие") Перейти
+            .category-card
+                h3 Косметика
+                a(href="/catalog?category=косметика") Перейти
+
+block scripts
+    script(src="/javascripts/index.js")
+
+block styles
+    style.
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .product-card {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .product-info {
+            padding: 1rem;
+        }
+        .product-info h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+        .product-title {
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        .product-title:hover {
+            color: var(--primary-color);
+        }
+        .product-actions {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: center;
+        }
+        .add-to-cart {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .add-to-cart:hover {
+            background: var(--primary-color-dark);
+        }
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        } 

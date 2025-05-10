@@ -1,0 +1,131 @@
+extends layout
+
+block content
+    .reports-container
+        h1 Отчеты по продажам
+        
+        // Общая статистика
+        .stats-section
+            h2 Общая статистика
+            .stats-grid
+                .stat-card
+                    h3 Всего заказов
+                    p.value= orderStats.total_orders
+                .stat-card
+                    h3 Общая выручка
+                    p.value #{orderStats.total_revenue} ₽
+                .stat-card
+                    h3 Средний чек
+                    p.value #{orderStats.average_order_value} ₽
+                .stat-card
+                    h3 Выполненные заказы
+                    p.value= orderStats.completed_orders
+                .stat-card
+                    h3 Новые заказы
+                    p.value= orderStats.new_orders
+
+        // Статистика по аптекам
+        .stats-section
+            h2 Статистика по аптекам
+            table.stats-table
+                thead
+                    tr
+                        th Аптека
+                        th Количество заказов
+                        th Выручка
+                        th Выполненные заказы
+                tbody
+                    each pharmacy in pharmacyStats
+                        tr
+                            td= pharmacy.Адрес
+                            td= pharmacy.total_orders
+                            td #{pharmacy.total_revenue} ₽
+                            td= pharmacy.completed_orders
+
+block styles
+    style.
+        .reports-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .reports-container h1 {
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        .stats-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-section h2 {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stats-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .stats-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-table {
+                display: block;
+                overflow-x: auto;
+            }
+        } 

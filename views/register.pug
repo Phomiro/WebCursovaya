@@ -1,0 +1,27 @@
+extends layout
+
+block content
+    .auth-container
+        h1 Регистрация
+        if error
+            .error-message= error
+        form.auth-form(action="/register", method="POST")
+            .form-group
+                label(for="name") ФИО
+                input#name(type="text", name="name", required)
+            .form-group
+                label(for="email") Email
+                input#email(type="email", name="email", required)
+            .form-group
+                label(for="password") Пароль
+                input#password(type="password", name="password", required)
+            .form-group
+                label(for="phone") Номер телефона
+                input#phone(type="tel", name="phone", required)
+            .form-group
+                label(for="address") Адрес доставки
+                textarea#address(name="address", required)
+            button.button(type="submit") Зарегистрироваться
+        .auth-links
+            p Уже есть аккаунт? 
+                a(href="/login") Войти 
