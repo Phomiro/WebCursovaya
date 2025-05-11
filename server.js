@@ -270,7 +270,7 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    const { name, email, password, phone, address } = req.body;
+    const { name, email, password, phone} = req.body;
     try {
         // Проверяем, не существует ли уже пользователь с таким email
         const [results] = await pool.query('SELECT * FROM users WHERE Email = ?', [email]);
@@ -286,8 +286,8 @@ app.post('/register', async (req, res) => {
             [name, email, hashedPassword, 'client']);
                 const userId = result.insertId;
         // Создаем профиль клиента
-        await pool.query('INSERT INTO clients (UserID, Адрес_доставки, Номер_телефона, История_заказов) VALUES (?, ?, ?, "[]")',
-            [userId, address, phone]);
+        await pool.query('INSERT INTO clients (UserID, Номер_телефона, История_заказов) VALUES (?, ?, "[]")',
+            [userId, phone]);
                         res.redirect('/login');
     } catch (error) {
         console.error('Ошибка при регистрации:', error);
