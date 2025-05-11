@@ -19,12 +19,6 @@ CREATE TABLE clients (
     FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
 
--- Создание таблицы администраторов
-CREATE TABLE admins (
-    UserID INT PRIMARY KEY,
-    FOREIGN KEY (UserID) REFERENCES users(UserID)
-);
-
 -- Создание таблицы фармацевтов
 CREATE TABLE pharmacists (
     UserID INT PRIMARY KEY,
@@ -75,16 +69,6 @@ CREATE TABLE orders (
     FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
 
--- Создание таблицы доставки
-CREATE TABLE deliveries (
-    DeliveryID INT PRIMARY KEY AUTO_INCREMENT,
-    PharmacyID INT,
-    Список_товаров JSON,
-    Дата_заказа DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Статус_доставки ENUM('в пути', 'доставлено') DEFAULT 'в пути',
-    FOREIGN KEY (PharmacyID) REFERENCES pharmacies(PharmacyID)
-);
-
 -- Создание таблицы корзины
 CREATE TABLE carts (
     CartID INT PRIMARY KEY AUTO_INCREMENT,
@@ -95,11 +79,3 @@ CREATE TABLE carts (
     Наличие_рецептурных BOOLEAN,
     FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
-
--- Создаем таблицу для связи фармацевтов с аптеками
-CREATE TABLE pharmacies_pharmacists (
-    PharmacyID INT,
-    UserID INT,
-    FOREIGN KEY (PharmacyID) REFERENCES pharmacies(PharmacyID),
-    FOREIGN KEY (UserID) REFERENCES pharmacists(UserID)
-); 

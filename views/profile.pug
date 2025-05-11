@@ -40,22 +40,6 @@ block content
                     else
                         p.no-orders У вас пока нет заказов
 
-            //-.section
-                h2 Избранное
-                .favorites
-                    if user.favorites && user.favorites.length > 0
-                        .products-grid
-                            each product in user.favorites
-                                .product-card.small
-                                    .product-image
-                                        img(src=product.image || "/images/default-product.png", alt=product.name)
-                                    .product-info
-                                        h3= product.name
-                                        p.product-price #{product.price} ₽
-                                        button.button В корзину
-                    else
-                        p.no-favorites У вас пока нет избранных товаров 
-
     // Модальное окно редактирования профиля
     .modal#edit-profile-modal(style="display:none;")
         .modal-content

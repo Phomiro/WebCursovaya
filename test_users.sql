@@ -1,6 +1,3 @@
--- Пароль для всех пользователей: test123
--- Хешированный пароль: $2b$10$vz6TP5pPcPV.ZgPeZxH6B.ZZzh3VZq3.zIx8tqh9Zf9k9LJGa9WrW
-
 -- Добавление администратора
 INSERT INTO users (ФИО, Email, Пароль, Роль) 
 VALUES ('Администратор Админ Админович', 'admin@test.com', '$2b$10$vz6TP5pPcPV.ZgPeZxH6B.ZZzh3VZq3.zIx8tqh9Zf9k9LJGa9WrW', 'admin');
