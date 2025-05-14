@@ -7,7 +7,6 @@ const path = require('path');
 
 const app = express();
 
-// Настройка подключения к базе данных
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -18,7 +17,6 @@ const pool = mysql.createPool({
     queueLimit: 0
 }).promise();
 
-// Настройка middleware
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'client')));
@@ -31,7 +29,6 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// Middleware для проверки аутентификации
 const checkAuth = (req, res, next) => {
     if (req.session.user) {
         next();
@@ -40,7 +37,6 @@ const checkAuth = (req, res, next) => {
     }
 };
 
-// Middleware для проверки роли
 const checkRole = (roles) => {
     return (req, res, next) => {
         if (req.session.user && roles.includes(req.session.user.role)) {
@@ -56,7 +52,6 @@ app.get('/', async (req, res) => {
     try {
         const [products] = await pool.query('SELECT * FROM products WHERE Наличие = true LIMIT 6');
         
-        // Получаем адрес доставки пользователя
         let userPharmacy = null;
         if (req.session.user) {
             const [clientData] = await pool.query('SELECT Адрес_доставки FROM clients WHERE UserID = ?', [req.session.user.id]);
@@ -65,7 +60,6 @@ app.get('/', async (req, res) => {
             }
         }
 
-        // Получаем список доступных товаров в аптеке пользователя
         let availableProducts = [];
         if (userPharmacy) {
             const [pharmacy] = await pool.query('SELECT Доступные_товары FROM pharmacies WHERE Адрес = ?', [userPharmacy]);
@@ -79,7 +73,6 @@ app.get('/', async (req, res) => {
             }
         }
 
-        // Проверяем доступность каждого товара
         const productsWithAvailability = products.map(product => {
             const isAvailable = availableProducts.includes(product.Название);
             return { ...product, isAvailable };
@@ -95,11 +88,21 @@ app.get('/', async (req, res) => {
     }
 });
 
-// Маршрут для каталога
+// Каталог
 app.get('/catalog', async (req, res) => {
     try {
         const category = req.query.category;
         const search = req.query.search;
+        const sort = req.query.sort;
+
+        if (category === 'all') {
+            const queryParams = {};
+            if (search) queryParams.search = search;
+            if (sort) queryParams.sort = sort;
+
+            return res.redirect('/catalog?' + new URLSearchParams(queryParams).toString());
+        }
+
         let query = 'SELECT * FROM products WHERE Наличие = true';
         const params = [];
 
@@ -113,9 +116,14 @@ app.get('/catalog', async (req, res) => {
             params.push(`%${search}%`, `%${search}%`);
         }
 
+        if (sort === 'asc') {
+            query += ' ORDER BY Цена ASC';
+        } else if (sort === 'desc') {
+            query += ' ORDER BY Цена DESC';
+        }
+
         const [products] = await pool.query(query, params);
-        
-        // Получаем адрес доставки пользователя
+
         let userPharmacy = null;
         if (req.session.user) {
             const [clientData] = await pool.query('SELECT Адрес_доставки FROM clients WHERE UserID = ?', [req.session.user.id]);
@@ -124,7 +132,6 @@ app.get('/catalog', async (req, res) => {
             }
         }
 
-        // Получаем список доступных товаров в аптеке пользователя
         let availableProducts = [];
         if (userPharmacy) {
             const [pharmacy] = await pool.query('SELECT Доступные_товары FROM pharmacies WHERE Адрес = ?', [userPharmacy]);
@@ -138,20 +145,19 @@ app.get('/catalog', async (req, res) => {
             }
         }
 
-        // Проверяем доступность каждого товара
         const productsWithAvailability = products.map(product => {
             const isAvailable = availableProducts.includes(product.Название);
             return { ...product, isAvailable };
         });
 
-        // Получаем список категорий для фильтра
         const [categories] = await pool.query('SELECT DISTINCT Вид_товара FROM products WHERE Наличие = true');
-        
-        res.render('catalog', { 
+
+        res.render('catalog', {
             products: productsWithAvailability,
             categories: categories.map(c => c.Вид_товара),
             currentCategory: category,
             search: search,
+            currentSort: sort,
             user: req.session.user
         });
     } catch (error) {
@@ -160,7 +166,7 @@ app.get('/catalog', async (req, res) => {
     }
 });
 
-// Маршрут для страницы товара
+// Страница товара
 app.get('/product/:id', async (req, res) => {
     try {
         const [products] = await pool.query('SELECT * FROM products WHERE ProductID = ?', [req.params.id]);
@@ -173,10 +179,8 @@ app.get('/product/:id', async (req, res) => {
         let isAvailable = false;
         let availablePharmacies = [];
 
-        // Получаем список всех аптек
         const [pharmacies] = await pool.query('SELECT * FROM pharmacies');
         
-        // Проверяем наличие товара в каждой аптеке
         availablePharmacies = pharmacies.filter(pharmacy => {
             try {
                 const availableProducts = JSON.parse(pharmacy.Доступные_товары || '[]');
@@ -217,7 +221,7 @@ app.get('/product/:id', async (req, res) => {
     }
 });
 
-// Маршруты аутентификации
+// Логин
 app.get('/login', (req, res) => {
     res.render('login');
 });
@@ -241,7 +245,6 @@ app.post('/login', async (req, res) => {
                         ФИО: user.ФИО
                     };
 
-                    // Получаем дополнительные данные в зависимости от роли
                     if (user.Роль === 'client') {
                 const [clientData] = await pool.query('SELECT * FROM clients WHERE UserID = ?', [user.UserID]);
                             if (clientData.length > 0) {
@@ -265,6 +268,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Регистрация
 app.get('/register', (req, res) => {
     res.render('register');
 });
@@ -272,13 +276,11 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
     const { name, email, password, phone} = req.body;
     try {
-        // Проверяем, не существует ли уже пользователь с таким email
         const [results] = await pool.query('SELECT * FROM users WHERE Email = ?', [email]);
         if (results.length > 0) {
             return res.render('register', { error: 'Пользователь с таким email уже существует' });
         }
 
-        // Хешируем пароль
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Создаем пользователя
@@ -300,7 +302,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-// Маршрут для корзины
+// Корзина
 app.get('/cart', checkAuth, async (req, res) => {
     try {
         // Проверяем структуру таблицы products
@@ -312,7 +314,6 @@ app.get('/cart', checkAuth, async (req, res) => {
         console.log('Данные корзины:', cartData);
 
         if (!cartData) {
-            // Создаем новую корзину, если её нет
             const [result] = await pool.query('INSERT INTO carts (UserID, Список_товаров, Количество_товаров, Итоговая_цена, Наличие_рецептурных) VALUES (?, "[]", 0, 0, false)',
                 [req.session.user.id]);
             cartData = {
@@ -325,14 +326,12 @@ app.get('/cart', checkAuth, async (req, res) => {
             };
         }
 
-        // Получаем подробную информацию о товарах
         let items = [];
         if (cartData.Список_товаров && cartData.Список_товаров !== '[]') {
             const cartItems = JSON.parse(cartData.Список_товаров);
             console.log('Товары в корзине:', cartItems);
             
             if (cartItems.length > 0) {
-                // Получаем все ProductID из корзины
                 const ids = cartItems.map(item => item.ProductID);
                 console.log('ID товаров для поиска:', ids);
                 
@@ -342,7 +341,6 @@ app.get('/cart', checkAuth, async (req, res) => {
                 const [products] = await pool.query(query, ids);
                 console.log('Найденные товары:', products);
                 
-                // Собираем массив с подробной информацией
                 items = cartItems.map(item => {
                     const product = products.find(p => p.ProductID === item.ProductID);
                     console.log(`Поиск товара ${item.ProductID}:`, product);
@@ -358,20 +356,19 @@ app.get('/cart', checkAuth, async (req, res) => {
         
         console.log('Итоговые данные для шаблона:', items);
         
-        // Передаем подробные товары в шаблон
         res.render('cart', { 
-            user: req.session.user, // <-- добавляем это
+            user: req.session.user, 
             cart: { ...cartData, Список_товаров: JSON.stringify(items) }
         });
     } catch (err) {
         res.render('cart', { 
-            user: req.session.user, // <-- даже если есть ошибка
+            user: req.session.user,
             error: 'Ошибка при загрузке корзины'
         });
     }
 });
 
-// Маршрут для добавления в корзину
+// Добавление в корзину
 app.post('/cart/add', checkAuth, async (req, res) => {
     try {
         console.log('Получены данные:', req.body);
@@ -383,7 +380,6 @@ app.post('/cart/add', checkAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'ID товара не указан' });
         }
 
-        // Проверяем существование товара
         console.log('Поиск товара с ID:', productId);
         const [products] = await pool.query('SELECT * FROM products WHERE ProductID = ?', [productId]);
         
@@ -395,7 +391,6 @@ app.post('/cart/add', checkAuth, async (req, res) => {
         const product = products[0];
         console.log('Найден товар:', product);
 
-        // Получаем адрес доставки пользователя
         const [clientData] = await pool.query('SELECT Адрес_доставки FROM clients WHERE UserID = ?', [userId]);
         if (!clientData || clientData.length === 0) {
             return res.status(400).json({ success: false, error: 'Адрес доставки не указан' });
@@ -403,7 +398,6 @@ app.post('/cart/add', checkAuth, async (req, res) => {
 
         const userPharmacy = clientData[0].Адрес_доставки;
 
-        // Проверяем наличие товара в аптеке пользователя
         const [pharmacy] = await pool.query('SELECT * FROM pharmacies WHERE Адрес = ?', [userPharmacy]);
         if (!pharmacy || pharmacy.length === 0) {
             return res.status(400).json({ success: false, error: 'Аптека не найдена' });
@@ -414,12 +408,10 @@ app.post('/cart/add', checkAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Товар недоступен в вашей аптеке' });
         }
 
-        // Получаем корзину пользователя
         const [carts] = await pool.query('SELECT * FROM carts WHERE UserID = ?', [userId]);
         
         if (!carts || carts.length === 0) {
             console.log('Создание новой корзины');
-            // Создаем новую корзину
             const cartItems = [{ ProductID: productId, quantity: 1 }];
             await pool.query(
                 'INSERT INTO carts (UserID, Список_товаров, Количество_товаров, Итоговая_цена, Наличие_рецептурных) VALUES (?, ?, ?, ?, ?)',
@@ -428,7 +420,6 @@ app.post('/cart/add', checkAuth, async (req, res) => {
         } else {
             console.log('Обновление существующей корзины');
             const cart = carts[0];
-            // Обновляем существующую корзину
             const items = JSON.parse(cart.Список_товаров || '[]');
             const existingItem = items.find(item => parseInt(item.ProductID) === productId);
             
@@ -440,13 +431,11 @@ app.post('/cart/add', checkAuth, async (req, res) => {
 
             const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
             
-            // Получаем актуальные цены всех товаров
             const productIds = items.map(item => parseInt(item.ProductID));
             const [allProducts] = await pool.query(
                 'SELECT ProductID, Цена FROM products WHERE ProductID IN (?)',
                 [productIds]
             );
-
             const totalPrice = items.reduce((sum, item) => {
                 const product = allProducts.find(p => p.ProductID === parseInt(item.ProductID));
                 return sum + (product ? parseFloat(product.Цена) * item.quantity : 0);
@@ -471,7 +460,7 @@ app.post('/cart/add', checkAuth, async (req, res) => {
     }
 });
 
-// Маршрут для удаления товара из корзины
+// Удаление из корзины
 app.post('/cart/remove', checkAuth, async (req, res) => {
     try {
         const productId = parseInt(req.body.productId);
@@ -479,7 +468,6 @@ app.post('/cart/remove', checkAuth, async (req, res) => {
 
         console.log('Попытка удаления товара:', { productId, userId });
 
-        // Получаем текущую корзину
         const [carts] = await pool.query('SELECT * FROM carts WHERE UserID = ?', [userId]);
         if (!carts || carts.length === 0) {
             console.log('Корзина не найдена');
@@ -489,25 +477,20 @@ app.post('/cart/remove', checkAuth, async (req, res) => {
         const cart = carts[0];
         console.log('Текущая корзина:', cart);
 
-        // Парсим список товаров
         let items = JSON.parse(cart.Список_товаров || '[]');
         console.log('Товары до удаления:', items);
 
-        // Удаляем товар
         items = items.filter(item => parseInt(item.ProductID) !== productId);
         console.log('Товары после удаления:', items);
 
         if (items.length === 0) {
-            // Если корзина пуста, обнуляем итоги
             await pool.query(
                 'UPDATE carts SET Список_товаров = "[]", Количество_товаров = 0, Итоговая_цена = 0 WHERE UserID = ?',
                 [userId]
             );
         } else {
-            // Пересчитываем общее количество и сумму
             const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-            
-            // Получаем актуальные цены товаров
+
             const productIds = items.map(item => parseInt(item.ProductID));
             const [products] = await pool.query(
                 'SELECT ProductID, Цена FROM products WHERE ProductID IN (?)',
@@ -521,7 +504,6 @@ app.post('/cart/remove', checkAuth, async (req, res) => {
 
             console.log('Обновленные данные:', { totalQuantity, totalPrice });
 
-            // Обновляем корзину
             await pool.query(
                 'UPDATE carts SET Список_товаров = ?, Количество_товаров = ?, Итоговая_цена = ? WHERE UserID = ?',
                 [JSON.stringify(items), totalQuantity, totalPrice, userId]
@@ -536,6 +518,7 @@ app.post('/cart/remove', checkAuth, async (req, res) => {
     }
 });
 
+// Обновление корзины
 app.post('/cart/update', checkAuth, async (req, res) => {
     try {
         const { productId, quantity } = req.body;
@@ -557,10 +540,8 @@ app.post('/cart/update', checkAuth, async (req, res) => {
             return res.json({ success: false, error: 'Товар не найден в корзине' });
         }
 
-        // Обновляем количество
         items[itemIndex].quantity = parseInt(quantity);
 
-        // Пересчитываем общее количество и сумму
         const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
         
         const productIds = items.map(item => parseInt(item.ProductID));
@@ -574,7 +555,6 @@ app.post('/cart/update', checkAuth, async (req, res) => {
             return sum + (product ? parseFloat(product.Цена) * item.quantity : 0);
         }, 0);
 
-        // Обновляем БД
         await pool.query(
             'UPDATE carts SET Список_товаров = ?, Количество_товаров = ?, Итоговая_цена = ? WHERE UserID = ?',
             [JSON.stringify(items), totalQuantity, totalPrice, userId]
@@ -588,7 +568,7 @@ app.post('/cart/update', checkAuth, async (req, res) => {
     }
 });
 
-// Маршруты для оформления заказа
+// Чекаут, проверка заказа
 app.get('/checkout', checkAuth, async (req, res) => {
     try {
         const userId = req.session.user.id;
@@ -683,12 +663,12 @@ app.post('/checkout', checkAuth, async (req, res) => {
     }
 });
 
-// Маршруты для администратора
+// Админ
 app.get('/admin', checkAuth, checkRole(['admin']), (req, res) => {
     res.render('admin');
 });
 
-// Маршруты для фармацевта
+// Фармацевт
 app.get('/pharmacist', checkAuth, checkRole(['pharmacist']), async (req, res) => {
     try {
         // Получаем все аптеки
@@ -715,18 +695,18 @@ app.get('/pharmacist', checkAuth, checkRole(['pharmacist']), async (req, res) =>
     }
 });
 
-// Маршрут для страницы обработки заказа фармацевтом
+// Обработка заказа фармацевтом
 app.get('/pharmacist/order/:id', checkAuth, checkRole(['pharmacist']), async (req, res) => {
     try {
         const orderId = req.params.id;
-        // Получаем заказ
+
         const [orders] = await pool.query('SELECT * FROM orders WHERE OrderID = ?', [orderId]);
         if (!orders.length) return res.status(404).send('Заказ не найден');
         const order = orders[0];
-        // Получаем клиента
+
         const [clients] = await pool.query('SELECT * FROM clients WHERE UserID = ?', [order.UserID]);
         const client = clients[0] || {};
-        // Получаем список товаров
+
         let items = [];
         if (order.Список_товаров) {
             try {
@@ -759,15 +739,13 @@ app.get('/pharmacist/order/:id', checkAuth, checkRole(['pharmacist']), async (re
 app.post('/pharmacist/order/:id/complete', checkAuth, checkRole(['pharmacist']), async (req, res) => {
     try {
         const orderId = req.params.id;
-        // Получаем заказ
+
         const [orders] = await pool.query('SELECT * FROM orders WHERE OrderID = ?', [orderId]);
         if (!orders.length) return res.status(404).send('Заказ не найден');
         const order = orders[0];
 
-        // Обновляем статус заказа
         await pool.query('UPDATE orders SET Статус = "выполнен", Дата_окончания_заказа = NOW() WHERE OrderID = ?', [orderId]);
 
-        // Обновляем историю заказов клиента
         const [orderData] = await pool.query('SELECT UserID FROM orders WHERE OrderID = ?', [orderId]);
         if (orderData.length > 0) {
             const userId = orderData[0].UserID;
@@ -803,7 +781,7 @@ app.post('/pharmacist/order/:id/complete', checkAuth, checkRole(['pharmacist']),
     }
 });
 
-// Маршрут для профиля
+// Профиль
 app.get('/profile', checkAuth, async (req, res) => {
     try {
     if (req.session.user.role === 'client') {
@@ -812,7 +790,6 @@ app.get('/profile', checkAuth, async (req, res) => {
                 ...req.session.user,
                 ...clientData[0]
             };
-            // Исправление: всегда массив
             if (typeof userData.История_заказов === 'string') {
                 try {
                     userData.История_заказов = JSON.parse(userData.История_заказов);
@@ -823,9 +800,7 @@ app.get('/profile', checkAuth, async (req, res) => {
             if (!Array.isArray(userData.История_заказов)) {
                 userData.История_заказов = [];
             }
-            // Гарантируем наличие Email
             userData.Email = clientData[0].Email || req.session.user.Email || req.session.user.email;
-            // Получаем список аптек для выпадающего списка
             const [pharmacies] = await pool.query('SELECT PharmacyID, Адрес FROM pharmacies');
             res.render('profile', { user: userData, pharmacies });
         } else {
@@ -837,50 +812,7 @@ app.get('/profile', checkAuth, async (req, res) => {
     }
 });
 
-// Тестовый маршрут для проверки данных
-app.get('/debug-cart', checkAuth, async (req, res) => {
-    try {
-        console.log('=== Начало отладки ===');
-        
-        // Проверяем структуру таблицы products
-        const [productsStructure] = await pool.query('SHOW COLUMNS FROM products');
-        console.log('Структура таблицы products:', productsStructure);
-
-        // Проверяем структуру таблицы carts
-        const [cartsStructure] = await pool.query('SHOW COLUMNS FROM carts');
-        console.log('Структура таблицы carts:', cartsStructure);
-
-        // Получаем данные корзины пользователя
-        const [carts] = await pool.query('SELECT * FROM carts WHERE UserID = ?', [req.session.user.id]);
-        console.log('Данные корзины:', carts[0]);
-
-        if (carts[0]) {
-            const items = JSON.parse(carts[0].Список_товаров || '[]');
-            console.log('Товары в корзине:', items);
-
-            if (items.length > 0) {
-                // Проверяем товары
-                const productIds = items.map(item => item.ProductID);
-                const [products] = await pool.query(
-                    'SELECT * FROM products WHERE ProductID IN (?)',
-                    [productIds]
-                );
-                console.log('Найденные товары:', products);
-            }
-        }
-
-        console.log('=== Конец отладки ===');
-        res.json({ 
-            message: 'Проверьте консоль сервера для просмотра отладочной информации',
-            cart: carts[0],
-            session: req.session
-        });
-    } catch (error) {
-        console.error('Ошибка при отладке:', error);
-        res.status(500).json({ error: 'Ошибка при отладке' });
-    }
-});
-
+// Редактирование профиля
 app.post('/profile/edit', checkAuth, async (req, res) => {
     try {
         const userId = req.session.user.id;
@@ -953,7 +885,7 @@ app.post('/profile/edit', checkAuth, async (req, res) => {
     }
 });
 
-// --- Админка: Пользователи ---
+// Админка: Пользователи
 app.get('/admin/users', checkAuth, checkRole(['admin']), async (req, res) => {
     const [users] = await pool.query('SELECT * FROM users');
     res.render('admin_users', { user: req.session.user, users });
@@ -992,11 +924,21 @@ app.post('/admin/users/:id/edit', checkAuth, checkRole(['admin']), async (req, r
 });
 
 app.post('/admin/users/:id/delete', checkAuth, checkRole(['admin']), async (req, res) => {
-    await pool.query('DELETE FROM users WHERE UserID = ?', [req.params.id]);
-    res.redirect('/admin/users');
+    const userId = req.params.id;
+
+    try {
+        await pool.query('DELETE FROM carts WHERE UserID = ?', [userId]);
+        await pool.query('DELETE FROM clients WHERE UserID = ?', [userId]);
+        await pool.query('DELETE FROM users WHERE UserID = ?', [userId]);
+
+        res.redirect('/admin/users');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Ошибка при удалении пользователя');
+    }
 });
 
-// --- Админка: Товары ---
+// Админка: Товары 
 app.get('/admin/products', checkAuth, checkRole(['admin']), async (req, res) => {
     const [products] = await pool.query('SELECT * FROM products');
     res.render('admin_products', { user: req.session.user, products });
@@ -1029,7 +971,7 @@ app.post('/admin/products/:id/delete', checkAuth, checkRole(['admin']), async (r
     res.redirect('/admin/products');
 });
 
-// --- Админка: Аптеки ---
+// Админка: Аптеки 
 app.get('/admin/pharmacies', checkAuth, checkRole(['admin']), async (req, res) => {
     const [pharmacies] = await pool.query('SELECT * FROM pharmacies');
     res.render('admin_pharmacies', { user: req.session.user, pharmacies });
@@ -1062,7 +1004,7 @@ app.post('/admin/pharmacies/:id/delete', checkAuth, checkRole(['admin']), async 
     res.redirect('/admin/pharmacies');
 });
 
-// Маршрут для отчетов по продажам
+// Отчеты по продажам
 app.get('/admin/reports/sales', checkAuth, checkRole(['admin']), async (req, res) => {
     try {
         // Общая статистика по заказам
