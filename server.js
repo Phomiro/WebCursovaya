@@ -704,7 +704,12 @@ app.get('/pharmacist/order/:id', checkAuth, checkRole(['pharmacist']), async (re
         if (!orders.length) return res.status(404).send('Заказ не найден');
         const order = orders[0];
 
-        const [clients] = await pool.query('SELECT * FROM clients WHERE UserID = ?', [order.UserID]);
+        const [clients] = await pool.query(`
+            SELECT clients.Номер_телефона, users.ФИО
+            FROM clients
+            JOIN users ON clients.UserID = users.UserID
+            WHERE clients.UserID = ?
+        `, [order.UserID]);
         const client = clients[0] || {};
 
         let items = [];
