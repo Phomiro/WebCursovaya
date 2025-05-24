@@ -933,6 +933,7 @@ app.post('/admin/users/:id/delete', checkAuth, checkRole(['admin']), async (req,
 
     try {
         await pool.query('DELETE FROM carts WHERE UserID = ?', [userId]);
+        await pool.query('DELETE FROM orders WHERE UserID = ?', [userId]);
         await pool.query('DELETE FROM clients WHERE UserID = ?', [userId]);
         await pool.query('DELETE FROM users WHERE UserID = ?', [userId]);
 
